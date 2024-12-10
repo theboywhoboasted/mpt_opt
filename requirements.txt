@@ -1,0 +1,11 @@
+pyetfdb_scraper==0.1.0
+Flask==3.0.3
+black==24.4.0
+pandas==2.2.2
+pylint==2.7.2
+ruff==0.8.1
+yfinance==0.2.50
+pathlib==1.0.1
+datetime==5.5
+scipy==1.14.1
+numpy==2.2.0
