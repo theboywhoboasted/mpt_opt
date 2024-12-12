@@ -16,8 +16,8 @@ class Cache(object):
 
     cache_version = 1
 
-    def prune(self, cutoff_time, logger=None):
+    def prune(self, cutoff_time, logger):
         raise NotImplementedError
 
-    def populate(self, max_new_entries, logger=None):
+    def populate(self, max_new_entries, logger):
         raise NotImplementedError

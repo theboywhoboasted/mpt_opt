@@ -8,13 +8,16 @@ src: https://github.com/MarekOzana/streamlit_markowitz/blob/main/src/optimizatio
 
 """
 
+import typing
+
 import numpy as np
 import scipy.optimize as sco
 
 
+@typing.no_type_check
 def find_min_var_portfolio(
-    exp_rets: np.array,
-    cov: np.array,
+    exp_rets: np.ndarray,
+    cov: np.ndarray,
     r_min: float = 0,
     w_max: float = 1,
 ):
@@ -38,7 +41,7 @@ def find_min_var_portfolio(
         vol_opt: volatility of optimal portfolio
     """
 
-    def calc_var(w, cov):
+    def calc_var(w, cov) -> np.float64:
         """Calculate portfolio Variance"""
         return np.dot(w.T, np.dot(cov, w))
 
@@ -71,7 +74,7 @@ def find_min_var_portfolio(
     return w, r_opt, vol_opt
 
 
-def calc_eff_front(exp_rets: np.array, cov: np.array, logger) -> dict[str, list]:
+def calc_eff_front(exp_rets: np.ndarray, cov: np.ndarray, logger) -> dict[str, list]:
     """Calculate effective frontier
 
     Iteratively find optimal portfolio for list of minimum returns

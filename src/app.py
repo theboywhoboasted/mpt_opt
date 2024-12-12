@@ -45,7 +45,7 @@ def index() -> Response:
 
     # check for cookies
     if not are_cookies_allowed():
-        return render_template("cookies.html", redir_page="index.html")
+        return make_response(render_template("cookies.html", redir_page="index.html"))
 
     if request.method == "POST":
         args = request.form
@@ -60,7 +60,7 @@ def loading(task_id) -> Response:
     app_logger.info("Loading task ID: %s", task_id)
     if ResultsDB.contains(task_id):
         app_logger.info("Redirecting to result for task ID: %s", task_id)
-        return redirect(url_for("result", task_id=task_id))
+        return make_response(redirect(url_for("result", task_id=task_id)))
     rsp = make_response(
         render_template(
             "optimizer.html",
@@ -81,6 +81,7 @@ def result(task_id) -> Response:
     app_logger.info("Result task ID: %s", task_id)
     if ResultsDB.contains(task_id):
         optimizer = ResultsDB.get(task_id)
+        assert optimizer is not None
         portfolio_output = optimizer.portfolio.to_html()
         rsp = make_response(
             render_template(
@@ -95,7 +96,7 @@ def result(task_id) -> Response:
         )
         return rsp
     else:
-        return redirect(url_for("loading", task_id=task_id))
+        return make_response(redirect(url_for("loading", task_id=task_id)))
 
 
 @app.route("/plot", methods=["GET"])
@@ -103,7 +104,7 @@ def result(task_id) -> Response:
 def plot() -> Response:
     app_logger = yf.utils.get_yf_logger()
     if not are_cookies_allowed():
-        return render_template("cookies.html", redir_page="plot.html")
+        return make_response(render_template("cookies.html", redir_page="plot.html"))
     if request.method == "GET":
         args = request.args
     else:

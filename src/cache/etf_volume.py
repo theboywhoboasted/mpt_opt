@@ -4,6 +4,7 @@ import pandas as pd
 import yfinance as yf
 from filelock import FileLock, Timeout
 from pyetfdb_scraper.etf import load_etfs
+from yfinance.exceptions import YFTickerMissingError
 
 from cache import CACHE_DIR, ETF_VOLUME_CACHE_CSV, ETF_VOLUME_CACHE_HEADER, Cache
 
@@ -15,7 +16,7 @@ class ETFVolumeCache(Cache):
     def __init__(self, etf_list):
         self.etf_list = etf_list
 
-    def prune(self, cutoff_time, logger=None):
+    def prune(self, cutoff_time, logger):
         if ETF_VOLUME_CACHE_CSV.exists():
             lock = FileLock(str(ETF_VOLUME_CACHE_CSV) + ".lock")
             with lock.acquire(timeout=20):
@@ -32,7 +33,7 @@ class ETFVolumeCache(Cache):
         else:
             return 0
 
-    def _populate(self, max_new_entries=100, logger=None):
+    def _populate(self, max_new_entries, logger):
         if ETF_VOLUME_CACHE_CSV.exists():
             volume_df = pd.read_csv(ETF_VOLUME_CACHE_CSV)
             logger.info(
@@ -59,7 +60,7 @@ class ETFVolumeCache(Cache):
                             "entry_time": pd.Timestamp.now("UTC"),
                         }
                     )
-                except yf.exceptions.YFTickerMissingError:
+                except YFTickerMissingError:
                     info = yf.Ticker(etf).info
                     assert info["quoteType"] in [
                         "ETF"

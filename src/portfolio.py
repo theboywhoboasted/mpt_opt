@@ -11,10 +11,10 @@ class Portfolio(object):
     def __init__(
         self,
         weight_map: Dict,
-        exp_ret: Optional[np.array] = None,
-        cov: Optional[np.array] = None,
+        exp_ret: Optional[np.ndarray] = None,
+        cov: Optional[np.ndarray] = None,
         risk_free_rate: Optional[float] = None,
-        num_days_per_year: int = 250,
+        num_days_per_year: float = 250.0,
         min_weight: float = 0.001,
     ):
         assert abs(sum(weight_map.values()) - 1.0) < EPS
@@ -97,18 +97,19 @@ class Portfolio(object):
         w = np.array(list(self.weight_map.values()))
         portfolio_return = None
         portfolio_variance = None
+        sum_weights: float = 0.0
         if self.exp_ret is None or self.cov is None:
             html_text += "<table class='table-metrics'>"
             html_text += "<tr><th>Component</th><th>Weight</th></tr>\n"
             for etf, weight in self.weight_map.items():
                 if weight > self.min_weight:
                     html_text += f"<tr><td>{etf}</td><td>{weight:.2%}</td></tr>\n"
+                    sum_weights += weight
         else:
             portfolio_return = np.dot(w, self.exp_ret) * self.num_days_per_year
             portfolio_variance = (
                 np.dot(w.T, np.dot(self.cov, w)) * self.num_days_per_year
             )
-            portfolio_volatility = np.sqrt(portfolio_variance)
             component_contributions = w * np.dot(self.cov, w) * self.num_days_per_year
             html_text += "<table class='table-metrics'>"
             html_text += "<tr><th>Component</th><th>Weight</th>\n"
@@ -116,9 +117,8 @@ class Portfolio(object):
             html_text += "<th>Contribution to Return</th>"
             html_text += "<th>Contribution to Variance</th>"
             html_text += "</tr>\n"
-            sum_mcr = 0.0
-            sum_mcv = 0.0
-            sum_weights = 0.0
+            sum_mcr: float = 0.0
+            sum_mcv: float = 0.0
             for idx, ((etf, weight), mcv) in enumerate(
                 zip(self.weight_map.items(), component_contributions)
             ):

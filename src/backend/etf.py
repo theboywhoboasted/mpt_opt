@@ -25,8 +25,11 @@ class ETFOptimizer:
         ).strftime("%Y-%m-%d")
         self.end_date = self.now.strftime("%Y-%m-%d")
         self.portfolio: Optional[Portfolio] = None
+        self.returns_df: Optional[pd.DataFrame] = None
+        self.etf_volume_cache: Optional[ETFVolumeCache] = None
 
     def set_contract_list(self, logger):
+        assert self.etf_volume_cache is not None
         df = self.etf_volume_cache.as_dataframe()
         df = df[
             pd.notnull(df["volume"])
@@ -43,6 +46,7 @@ class ETFOptimizer:
 
     def set_top_etf_return_df(self, logger):
         returns_df = None
+        assert self.contract_list is not None
         for etf in self.contract_list:
             try:
                 return_series = get_yf_return_series(
@@ -84,6 +88,7 @@ class ETFOptimizer:
                         break
             if len(returns_df.columns) >= self.num_contracts:
                 break
+        assert returns_df is not None
         returns_df = returns_df.dropna(axis=0, how="all")
         self.returns_df = returns_df
 
@@ -93,7 +98,7 @@ class ETFOptimizer:
         self.etf_volume_cache = ETFVolumeCache(etf_list)
         self.set_contract_list(logger)
         self.set_top_etf_return_df(logger)
-
+        assert self.returns_df is not None
         logger.info(
             f"Using the following ETFs for optimization: {self.returns_df.columns}",
         )

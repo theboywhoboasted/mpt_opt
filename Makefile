@@ -21,5 +21,7 @@ lint:
 	docker run --rm -i hadolint/hadolint < Dockerfile.dev
 	docker run --rm -i hadolint/hadolint < Dockerfile.prod
 	PYTHONPATH=src pylint src/ --disable=R,C
+	pyright src/
+	cd src/ && mypy . && cd ..
 	
 all: install build lint
