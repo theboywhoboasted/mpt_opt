@@ -149,8 +149,10 @@ class Portfolio(object):
 
         # actions
         portfolio_str = html.escape(self.to_string())
-        start_date = (pd.Timestamp.now() - pd.Timedelta(days=2000)).strftime("%Y-%m-%d")
-        end_date = (pd.Timestamp.now() - pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+        start_date = (pd.Timestamp.now("UTC") - pd.Timedelta(days=2000)).strftime(
+            "%Y-%m-%d"
+        )
+        end_date = (pd.Timestamp.now("UTC") - pd.Timedelta(days=1)).strftime("%Y-%m-%d")
 
         plot_link = f"/plot.html?portfolio={portfolio_str}"
         plot_link += f"&start_date={start_date}"

@@ -11,7 +11,9 @@ from flask import (
     request,
     url_for,
 )
+from waitress import serve
 
+from cache.utils import populate_all_caches
 from web.optimizer import CORR, NUM_CONTRACTS, NUM_YEARS, ResultsDB, render_optimizer
 from web.plot import plot_portfolio
 
@@ -55,9 +57,9 @@ def index() -> Response:
 @app.route("/loading/<task_id>")
 def loading(task_id) -> Response:
     app_logger = yf.utils.get_yf_logger()
-    app_logger.info("Loading task ID: %d", task_id)
+    app_logger.info("Loading task ID: %s", task_id)
     if ResultsDB.contains(task_id):
-        app_logger.info("Redirecting to result for task ID: %d", task_id)
+        app_logger.info("Redirecting to result for task ID: %s", task_id)
         return redirect(url_for("result", task_id=task_id))
     rsp = make_response(
         render_template(
@@ -76,7 +78,7 @@ def loading(task_id) -> Response:
 @app.route("/result/<task_id>")
 def result(task_id) -> Response:
     app_logger = yf.utils.get_yf_logger()
-    app_logger.info("Result task ID: %d", task_id)
+    app_logger.info("Result task ID: %s", task_id)
     if ResultsDB.contains(task_id):
         optimizer = ResultsDB.get(task_id)
         portfolio_output = optimizer.portfolio.to_html()
@@ -120,6 +122,8 @@ if __name__ == "__main__":
         logger.setLevel(logging.CRITICAL)
         debug = False
 
+    populate_all_caches(logger)
+
     # this port needs to be exposed in the Dockerfile
     port = int(os.getenv("PORT", "8080"))
-    app.run(host="0.0.0.0", port=port, debug=debug)
+    serve(app, host="0.0.0.0", port=port)

@@ -16,4 +16,4 @@ docker image ls
 mkdir -p $(pwd)/__cache__
 
 # Run flask app
-docker run -v $(pwd)/__cache__:/app/cache -p 127.0.0.1:8080:8080 webapp/mpt:$tag
+docker run -v $(pwd)/__cache__:/app/__cache__ -p 127.0.0.1:8080:8080 webapp/mpt:$tag

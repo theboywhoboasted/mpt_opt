@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from typing import Optional
 
 import numpy as np
@@ -19,7 +18,7 @@ class ETFOptimizer:
         self.correlation_cutoff = correlation_cutoff
         self.num_years = num_years
         self.contract_list = None
-        self.now = datetime.now(timezone.utc)
+        self.now = pd.Timestamp.now("UTC")
         self.cache_cutoff_time = self.now - pd.Timedelta(days=7)
         self.start_date = (
             self.now - pd.Timedelta(days=int(365 * self.num_years))

@@ -1,5 +1,3 @@
-from datetime import datetime, timezone
-
 import pandas as pd
 import yfinance as yf
 
@@ -40,6 +38,7 @@ class ETFVolumeCache(Cache):
         volume_list = []
         for etf in self.etf_list:
             if (volume_df is None) or (etf not in volume_df["symbol"].values):
+                logger.info("Fetching volume for %s", etf)
                 try:
                     info = yf.Ticker(etf).fast_info
                     assert info["quoteType"] in [
@@ -52,7 +51,7 @@ class ETFVolumeCache(Cache):
                             "volume": info["three_month_average_volume"],
                             "price": info["fifty_day_average"],
                             "currency": info["currency"],
-                            "entry_time": datetime.now(timezone.utc),
+                            "entry_time": pd.Timestamp.now("UTC"),
                         }
                     )
                 except yf.exceptions.YFTickerMissingError:
@@ -67,7 +66,7 @@ class ETFVolumeCache(Cache):
                             "volume": info["three_month_average_volume"],
                             "price": info["fifty_day_average"],
                             "currency": info["currency"],
-                            "entry_time": datetime.now(timezone.utc),
+                            "entry_time": pd.Timestamp.now("UTC"),
                         }
                     )
                 except Exception as e:  # pylint: disable=broad-except

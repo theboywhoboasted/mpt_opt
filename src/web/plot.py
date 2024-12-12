@@ -256,8 +256,8 @@ class PlotPortfolio:
 
 
 def plot_portfolio(args: Optional[dict], cookies: Dict, logger) -> Response:
-    start = (pd.Timestamp.now() - pd.Timedelta(days=365 * 5)).strftime("%Y-%m-%d")
-    end = (pd.Timestamp.now() - pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+    start = (pd.Timestamp.now("UTC") - pd.Timedelta(days=365 * 5)).strftime("%Y-%m-%d")
+    end = (pd.Timestamp.now("UTC") - pd.Timedelta(days=1)).strftime("%Y-%m-%d")
     default_vals = {
         "portfolio": cookies.get("portfolio", "VTI:0.5|VXUS:0.3|BND:0.1|BNDX:0.1"),
         "start_date": cookies.get("start_date", start),
