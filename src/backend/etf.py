@@ -26,17 +26,6 @@ class ETFOptimizer:
         self.end_date = self.now.strftime("%Y-%m-%d")
         self.portfolio: Optional[Portfolio] = None
 
-    def set_cache(self, logger, chunk_size=100):
-        etf_list = load_etfs()
-        logger.info(f"ETF universe has {len(etf_list)} entries")
-        etf_volume_cache = ETFVolumeCache(etf_list)
-        cache_len = etf_volume_cache.prune(self.cache_cutoff_time, logger)
-        logger.info(f"Pruned ETF Volume cache has {cache_len} entries")
-        added_entries = chunk_size
-        while added_entries >= chunk_size:
-            added_entries = etf_volume_cache.populate(chunk_size, logger)
-        self.etf_volume_cache = etf_volume_cache
-
     def set_contract_list(self, logger):
         df = self.etf_volume_cache.as_dataframe()
         df = df[
@@ -99,7 +88,9 @@ class ETFOptimizer:
         self.returns_df = returns_df
 
     def run_optimizer(self, logger):
-        self.set_cache(logger)
+        ETFVolumeCache.process_cache(logger, days_to_prune_after=7, chunk_size=100)
+        etf_list = load_etfs()
+        self.etf_volume_cache = ETFVolumeCache(etf_list)
         self.set_contract_list(logger)
         self.set_top_etf_return_df(logger)
 

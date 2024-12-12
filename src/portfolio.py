@@ -135,8 +135,7 @@ class Portfolio(object):
                     sum_mcv += mcv
                     sum_weights += weight
             html_text += f"<tr><th>Portfolio</th><th>{sum_weights:.2%}</th>"
-            html_text += f"<th>{portfolio_return:.2f}%</th>\n"
-            html_text += f"<th>{portfolio_volatility:.2f}%</th>"
+            html_text += "<th></th><th></th>"
             html_text += f"<th>{sum_mcr:.2f}%</th><th>{sum_mcv:.2f}%</th></tr>\n"
         html_text += "</table>"
         if abs(sum_weights - 1.0) > 0.01:
