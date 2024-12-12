@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        {% include 'styles.css' %}
+    </style>
+<title>Portfolio Optimizer</title>
+</head>
+<body>
+    <h1>Mean-Variance Portfolio Optimizer</h1>
+    <div class="form-container">
+        <form action="optimizer.html" method="post">
+
+            {% if submitted %}
+            {% set input_enabled = "disabled" %}
+            {% else %}
+            {% set input_enabled = "" %}
+            {% endif %}
+
+            <div class="form-row">
+                <label for="universe">Choose the universe of Tradable Contracts:</label>
+                <select id="universe" name="universe" required {{input_enabled}}>
+                    <option value="etf_vol">All US ETFs sorted by daily traded volume</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label for="currency">Filter Contracts that trade in this currency:</label>
+                <select id="currency" name="currency" required {{input_enabled}}>
+                    <option value="USD">USD</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <label for="num_contracts">Number of Contracts to Choose From:</label>
+                <input type="number" id="num_contracts" name="num_contracts" value={{ num_contracts }} {{input_enabled}}>
+            </div>
+
+            <div class="form-row">
+                <label for="correlation_cutoff">Drop Contracts with Correlation Greater Than:</label>
+                <input type="number" id="correlation_cutoff" name="correlation_cutoff" value={{ corr }} min="0.0" step="0.001" {{input_enabled}}>
+            </div>
+
+            <div class="form-row">
+                <label for="num_years">Number of Years to Train On:</label>
+                <input type="number" id="num_years" name="num_years" value={{ num_years }} step="0.01" {{ input_enabled }}>
+            </div>
+            
+            <button type="submit" onclick="submitForm()" {{input_enabled}}>Generate Optimised Portfolio</button>
+        </form>
+        <p>You can read more about the fields and algorithm used on
+            <a href="https://github.com/theboywhoboasted/mpt_opt">github</a></p>
+    </div>
+
+    {% if submitted and in_progress %}
+    <div class="loader"></div>
+    <script>
+        setTimeout(() => {
+            location.reload(); // Refresh periodically to check if the task is complete
+        }, 10000); // Refresh every 10 seconds
+    </script>
+    {% endif %}
+
+    {{ portfolio_output | safe }}
+
+</body>
+</html>

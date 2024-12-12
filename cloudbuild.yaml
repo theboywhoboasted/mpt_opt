@@ -1,0 +1,29 @@
+steps:
+  # Step 1: Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/webappmpt:$COMMIT_SHA', '-f', 'Dockerfile.prod', '.']
+
+  # Step 2: Push the Docker image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/webappmpt:$COMMIT_SHA']
+
+  # Step 3: Deploy the image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - webappmpt
+      - --image=gcr.io/$PROJECT_ID/webappmpt:$COMMIT_SHA
+      - --region=us-central1
+      - --platform=managed
+      - --allow-unauthenticated
+
+# Optional: Set a timeout for the build (default is 10 minutes)
+timeout: '900s'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+substitutions:
+  _REGION: 'us-central1'

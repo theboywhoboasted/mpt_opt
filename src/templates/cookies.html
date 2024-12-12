@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cookie Consent</title>
+    <style>
+        {% include 'styles.css' %}
+    </style>
+</head>
+    <body>
+        <h1>Welcome to my tool to optimize and plot portfolios</h1>
+
+        <div class="output">
+            <h4>We need to use cookies to store your configuration:</h4>
+            <p>The website uses cookies to enhance your experience by saving the state
+                of the website, ensuring that our interactive features work seamlessly.
+                These cookies are essential for the functionality of
+                the site and do not collect any personal information, nor are they
+                shared with third parties or used for marketing purposes. By accepting
+                cookies, you enable us to provide you with a smooth and uninterrupted
+                user experience.</p>
+            
+            <p>Your consent is stored as a cookie so you can revoke your consent at
+                any time by clearing cookies from your browser.</p>
+        </div>
+
+        <div class="row">
+            <form action="cookies.html" method="post">
+                <input type="hidden" name="redir_page" value={{ redir_page }}>
+                <button type="submit" name="allow">Accept cookies</button>
+            </form>
+        </div>
+   
+    </body>
+</html>
