@@ -23,4 +23,6 @@ This repo helps you to use historical data to compute a portfolio of ETFs with h
 [^2]: See https://en.wikipedia.org/wiki/Modern_portfolio_theory
 
 # Known issues
-- The current implementation depends heavily on `yfinance` for both ETF metadata and trading data. Unfortunately connecting to Yahoo Finance has been inconsistent over a variety of internet connections and VPN.
+- The current implementation depends heavily on `yfinance` for both ETF metadata and trading data. Unfortunately connecting to Yahoo Finance has been inconsistent over a variety of internet connections and VPN. [^3]
+
+[^3]: https://github.com/ranaroussi/yfinance/discussions/2081

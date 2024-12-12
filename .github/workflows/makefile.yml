@@ -26,5 +26,5 @@ jobs:
     - name: Build dockers
       run: make build
 
-    # - name: Run lint
-    #   run: make lint
+    - name: Run lint
+      run: make lint
