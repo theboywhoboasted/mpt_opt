@@ -16,7 +16,7 @@ class ETFVolumeCache(Cache):
     def __init__(self, etf_list):
         self.etf_list = etf_list
 
-    def prune(self, cutoff_time, logger):
+    def prune(self, cutoff_time, logger) -> int:
         if ETF_VOLUME_CACHE_CSV.exists():
             lock = FileLock(str(ETF_VOLUME_CACHE_CSV) + ".lock")
             with lock.acquire(timeout=20):
@@ -33,7 +33,7 @@ class ETFVolumeCache(Cache):
         else:
             return 0
 
-    def _populate(self, max_new_entries, logger):
+    def _populate(self, max_new_entries, logger) -> int:
         if ETF_VOLUME_CACHE_CSV.exists():
             volume_df = pd.read_csv(ETF_VOLUME_CACHE_CSV)
             logger.info(
@@ -90,19 +90,19 @@ class ETFVolumeCache(Cache):
             logger.info(f"Saved volume cache to {ETF_VOLUME_CACHE_CSV}")
         return len(volume_list)
 
-    def populate(self, max_new_entries=100, logger=None):
+    def populate(self, max_new_entries=100, logger=None) -> int:
         assert CACHE_DIR.exists(), f"{CACHE_DIR} does not exist"
         lock = FileLock(str(ETF_VOLUME_CACHE_CSV) + ".lock")
         with lock.acquire(timeout=20):
             return self._populate(max_new_entries, logger)
 
-    def as_dataframe(self):
+    def as_dataframe(self) -> pd.DataFrame:
         return pd.read_csv(ETF_VOLUME_CACHE_CSV)
 
     @classmethod
     def process_cache(
         cls, logger, days_to_prune_after=7, chunk_size=100, num_retries=3
-    ):
+    ) -> None:
         etf_list = load_etfs()
         etf_volume_cache = ETFVolumeCache(etf_list)
         cache_cutoff_time = pd.Timestamp.now("UTC") - pd.Timedelta(

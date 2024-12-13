@@ -20,6 +20,7 @@ from web.optimizer import (
     TaskDB,
     TaskState,
     format_error,
+    format_log,
     render_optimizer,
 )
 from web.plot import plot_portfolio
@@ -68,27 +69,30 @@ def task(task_id) -> Response:
     task_state = TaskDB.get_state(task_id)
     cookie_dict = {
         "num_contracts": request.cookies.get("num_contracts", NUM_CONTRACTS),
-        "correlation_cutoff": request.cookies.get("correlation_cutoff", CORR),
+        "corr": request.cookies.get("correlation_cutoff", CORR),
         "num_years": request.cookies.get("num_years", NUM_YEARS),
         "submitted": True,
     }
+    log_output = format_log(TaskDB.get("log", task_id))
     if task_state == TaskState.NOT_FOUND:
-        error_output = format_error("Task not found")
+        not_found = format_error(f"Task not found: {task_id}")
         rsp = make_response(
             render_template(
                 "optimizer.html",
                 in_progress=False,
-                error_output=error_output,
+                error_output=not_found,
                 **cookie_dict,
             ),
         )
     elif task_state == TaskState.FAILURE:
-        error_output = TaskDB.get("error", task_id)
+        failure = TaskDB.get("error", task_id)
+        assert failure is not None
         rsp = make_response(
             render_template(
                 "optimizer.html",
                 in_progress=False,
-                error_output=error_output,
+                log_output=log_output,
+                error_output=failure,
                 **cookie_dict,
             ),
         )
@@ -98,6 +102,7 @@ def task(task_id) -> Response:
             render_template(
                 "optimizer.html",
                 in_progress=False,
+                log_output=log_output,
                 portfolio_output=portfolio_output,
                 **cookie_dict,
             ),
@@ -107,6 +112,7 @@ def task(task_id) -> Response:
             render_template(
                 "optimizer.html",
                 in_progress=True,
+                log_output=log_output,
                 **cookie_dict,
             ),
         )
@@ -134,7 +140,7 @@ if __name__ == "__main__":
         logger.setLevel(logging.INFO)
         debug = True
     else:
-        logger.setLevel(logging.CRITICAL)
+        logger.setLevel(logging.ERROR)
         debug = False
 
     populate_all_caches(logger)

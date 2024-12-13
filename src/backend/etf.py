@@ -1,9 +1,10 @@
-from typing import Optional
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
 from pyetfdb_scraper.etf import load_etfs
 
+import web.optimizer
 from backend.yf_utils import YFError, get_yf_return_series
 from cache.etf_volume import ETFVolumeCache
 from opt import calc_eff_front, find_min_var_portfolio
@@ -12,12 +13,18 @@ from portfolio import Portfolio
 
 class ETFOptimizer:
 
-    def __init__(self, currency, num_contracts, correlation_cutoff, num_years):
+    def __init__(
+        self,
+        currency: str,
+        num_contracts: int,
+        correlation_cutoff: float,
+        num_years: float,
+    ):
         self.currency = currency
         self.num_contracts = num_contracts
         self.correlation_cutoff = correlation_cutoff
         self.num_years = num_years
-        self.contract_list = None
+        self.contract_list: Optional[List[str]] = None
         self.now = pd.Timestamp.now("UTC")
         self.cache_cutoff_time = self.now - pd.Timedelta(days=7)
         self.start_date = (
@@ -41,7 +48,8 @@ class ETFOptimizer:
         ]
         df["notional"] = df["volume"] * df["price"]
         df = df.sort_values("notional", ascending=False)
-        self.contract_list = df["symbol"].values
+        self.contract_list = list(df["symbol"].values)
+        assert self.contract_list is not None
         logger.info(f"Using {len(self.contract_list)} ETFs in {self.currency}")
 
     def set_top_etf_return_df(self, logger):
@@ -92,12 +100,22 @@ class ETFOptimizer:
         returns_df = returns_df.dropna(axis=0, how="all")
         self.returns_df = returns_df
 
-    def run_optimizer(self, logger):
+    def run_optimizer(self, task_id: str, logger):
+        def write_to_log(msg: str):
+            log_text = web.optimizer.TaskDB.get("log", task_id)
+            assert log_text is not None
+            ts = pd.Timestamp.now("UTC").strftime("%Y-%m-%d %H:%M:%S")
+            new_msg = f"{log_text.rstrip()}\n{ts}: {msg}"
+            web.optimizer.TaskDB.put("log", task_id, new_msg)
+
+        write_to_log("Starting optimizer")
         ETFVolumeCache.process_cache(logger, days_to_prune_after=7, chunk_size=100)
+        write_to_log("Updated ETF metadata cache")
         etf_list = load_etfs()
         self.etf_volume_cache = ETFVolumeCache(etf_list)
         self.set_contract_list(logger)
         self.set_top_etf_return_df(logger)
+        write_to_log("ETF data from Yahoo Finance loaded")
         assert self.returns_df is not None
         logger.info(
             f"Using the following ETFs for optimization: {self.returns_df.columns}",
@@ -110,6 +128,7 @@ class ETFOptimizer:
         num_days_per_year = len(self.returns_df) / self.num_years
 
         efficient_frontier = calc_eff_front(mean_returns, covar_matrix, logger)
+        write_to_log("Calculated efficient frontier")
         zero_vol = sorted(
             zip(individual_volatility, mean_returns, self.returns_df.columns),
             key=lambda x: x[0],
@@ -143,3 +162,4 @@ class ETFOptimizer:
         )
         logger.info(f"Mean returns: {mean_returns}")
         logger.info(f"Num days per year: {num_days_per_year}")
+        write_to_log("Finished optimization")

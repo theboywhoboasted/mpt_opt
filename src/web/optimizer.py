@@ -1,10 +1,11 @@
 from enum import Enum
 from threading import Thread
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 from flask import Response, make_response, redirect, render_template, url_for
 
 from backend.etf import ETFOptimizer
+from backend.yf_utils import YFDataQualityError, YFDownloadError
 
 NUM_CONTRACTS = 100
 CORR = 0.99
@@ -19,22 +20,22 @@ class TaskState(Enum):
 
 
 class TaskDB(object):
-    task_data: Dict[str, Any] = {
+    task_data: Dict[str, Dict[str, str]] = {
         "error": {},
         "result": {},
         "log": {},
     }
 
     @classmethod
-    def get(cls, key: str, task_id: str):
+    def get(cls, key: str, task_id: str) -> Optional[str]:
         return cls.task_data[key].get(task_id)
 
     @classmethod
-    def put(cls, key: str, task_id: str, result):
+    def put(cls, key: str, task_id: str, result) -> None:
         cls.task_data[key][task_id] = result
 
     @classmethod
-    def contains(cls, key: str, task_id: str):
+    def contains(cls, key: str, task_id: str) -> bool:
         return task_id in cls.task_data[key]
 
     @classmethod
@@ -51,15 +52,34 @@ class TaskDB(object):
 def run_etf_optimizer(task_id, optimizer: ETFOptimizer, logger):
     TaskDB.put("log", task_id, "")
     try:
-        optimizer.run_optimizer(logger)
+        optimizer.run_optimizer(task_id, logger)
         assert optimizer.portfolio is not None
         TaskDB.put("result", task_id, optimizer.portfolio.to_html())
         logger.info(f"Stored results for task ID {task_id}")
-    except Exception as e:
+    except (YFDownloadError, YFDataQualityError) as e:
+        # Errors related to yahoo finance data so safe to expose
         TaskDB.put(
-            "error", task_id, format_error(f"Error in running task ID {task_id}")
+            "error",
+            task_id,
+            format_error(str(e)),
         )
         logger.error(f"Error for task ID {task_id}: {e}")
+    except Exception as e:
+        TaskDB.put(
+            "error",
+            task_id,
+            format_error(f"Unexpected error in running task ID {task_id}"),
+        )
+        logger.error(f"Unexpected error for task ID {task_id}: {e}")
+
+
+def format_log(log_output: Optional[str]) -> str:
+    if (log_output is None) or (log_output == ""):
+        return ""
+    html_text = "<div class='code-box'>Progress Logs:<br>"
+    html_text += log_output.strip().replace("\n", "<br>")
+    html_text += "</div>\n"
+    return html_text
 
 
 def format_error(error_output: str) -> str:
@@ -80,7 +100,7 @@ def render_optimizer(args: Optional[Dict], logger) -> Response:
                     args["currency"],
                     int(args["num_contracts"]),
                     float(args["correlation_cutoff"]),
-                    int(args["num_years"]),
+                    float(args["num_years"]),
                 )
                 task_id = optimizer.now.strftime("%Y%m%d_%H%M%S_%f")
                 thread = Thread(

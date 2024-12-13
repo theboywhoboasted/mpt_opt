@@ -5,12 +5,20 @@ import yfinance as yf
 
 class YFError(Exception):
     def __init__(self, message):
-        self._message = message
-        super().__init__(self._message)
+        super().__init__(message)
+        self.message = message
 
     def __str__(self):
         class_name = self.__class__.__name__
-        return f"{class_name}: {self._message}"
+        return f"{class_name}: {self.message}"
+
+
+class YFDownloadError(YFError):
+    pass
+
+
+class YFDataQualityError(YFError):
+    pass
 
 
 def get_yf_return_series(
@@ -34,8 +42,11 @@ def get_yf_return_series(
                 price_df = price_df.ffill()
             return_series = price_df[(return_column, tickr)].apply(np.log).diff() * 100
             if return_series.abs().max() > max_return:
-                raise YFError(f"Tikcer {tickr} has returns > {max_return}")
+                raise YFDataQualityError(
+                    f"Ticker {tickr} has at least one daily return"
+                    f" > {max_return} in magnitude"
+                )
             return return_series
-    raise YFError(
+    raise YFDownloadError(
         f"Failed to get return series for {tickr} even after {num_retries} retries"
     )
