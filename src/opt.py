@@ -43,7 +43,9 @@ def find_min_var_portfolio(
 
     def calc_var(w, cov) -> np.float64:
         """Calculate portfolio Variance"""
-        return np.dot(w.T, np.dot(cov, w))
+        variance = np.dot(w.T, np.dot(cov, w))
+        assert variance > -1e-9
+        return max(variance, 0.0)
 
     n_assets = len(exp_rets)
     constraints = [

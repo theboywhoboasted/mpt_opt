@@ -1,3 +1,4 @@
+from enum import Enum
 from threading import Thread
 from typing import Any, Dict, Optional
 
@@ -10,26 +11,64 @@ CORR = 0.99
 NUM_YEARS = 5
 
 
-class ResultsDB(object):
-    results: Dict[str, Any] = dict()
+class TaskState(Enum):
+    NOT_FOUND = "NOT_FOUND"
+    IN_PROGRESS = "IN_PROGRESS"
+    SUCCESS = "SUCCESS"
+    FAILURE = "FAILURE"
+
+
+class TaskDB(object):
+    task_data: Dict[str, Any] = {
+        "error": {},
+        "result": {},
+        "log": {},
+    }
 
     @classmethod
-    def get(cls, task_id: str):
-        return cls.results.get(task_id)
+    def get(cls, key: str, task_id: str):
+        return cls.task_data[key].get(task_id)
 
     @classmethod
-    def put(cls, task_id: str, result):
-        cls.results[task_id] = result
+    def put(cls, key: str, task_id: str, result):
+        cls.task_data[key][task_id] = result
 
     @classmethod
-    def contains(cls, task_id):
-        return task_id in cls.results
+    def contains(cls, key: str, task_id: str):
+        return task_id in cls.task_data[key]
+
+    @classmethod
+    def get_state(cls, task_id: str):
+        if task_id not in cls.task_data["log"]:
+            return TaskState.NOT_FOUND
+        if task_id in cls.task_data["result"]:
+            return TaskState.SUCCESS
+        if task_id in cls.task_data["error"]:
+            return TaskState.FAILURE
+        return TaskState.IN_PROGRESS
 
 
-def run_etf_optimizer(task_id, optimizer, logger):
-    optimizer.run_optimizer(logger)
-    ResultsDB.put(task_id, optimizer)
-    logger.info(f"Stored results for task ID {task_id}: {ResultsDB.contains(task_id)}")
+def run_etf_optimizer(task_id, optimizer: ETFOptimizer, logger):
+    TaskDB.put("log", task_id, "")
+    try:
+        optimizer.run_optimizer(logger)
+        assert optimizer.portfolio is not None
+        TaskDB.put("result", task_id, optimizer.portfolio.to_html())
+        logger.info(f"Stored results for task ID {task_id}")
+    except Exception as e:
+        TaskDB.put(
+            "error", task_id, format_error(f"Error in running task ID {task_id}")
+        )
+        logger.error(f"Error for task ID {task_id}: {e}")
+
+
+def format_error(error_output: str) -> str:
+    html_text = f"<div class='code-box'>{error_output}</div>"
+    html_text += "<div class='form-container'>"
+    new_tab = "target='_blank' rel='noopener noreferrer'"
+    html_text += f"<a href='/' {new_tab}><button>Run Optimizer Again</button></a>"
+    html_text += "</div>\n"
+    return html_text
 
 
 def render_optimizer(args: Optional[Dict], logger) -> Response:
@@ -50,7 +89,7 @@ def render_optimizer(args: Optional[Dict], logger) -> Response:
                 )
                 logger.info(f"Starting optimizer thread {task_id}")
                 thread.start()
-                rsp = make_response(redirect(url_for("loading", task_id=task_id)))
+                rsp = make_response(redirect(url_for("task", task_id=task_id)))
                 rsp.set_cookie("task_id", task_id)
                 rsp.set_cookie("currency", args["currency"])
                 rsp.set_cookie("num_contracts", args["num_contracts"])

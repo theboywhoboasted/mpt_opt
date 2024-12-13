@@ -9,12 +9,19 @@ from flask import (
     redirect,
     render_template,
     request,
-    url_for,
 )
 from waitress import serve
 
 from cache.utils import populate_all_caches
-from web.optimizer import CORR, NUM_CONTRACTS, NUM_YEARS, ResultsDB, render_optimizer
+from web.optimizer import (
+    CORR,
+    NUM_CONTRACTS,
+    NUM_YEARS,
+    TaskDB,
+    TaskState,
+    format_error,
+    render_optimizer,
+)
 from web.plot import plot_portfolio
 
 app = Flask(__name__)
@@ -54,49 +61,56 @@ def index() -> Response:
     return render_optimizer(args, app_logger)
 
 
-@app.route("/loading/<task_id>")
-def loading(task_id) -> Response:
+@app.route("/task/<task_id>")
+def task(task_id) -> Response:
     app_logger = yf.utils.get_yf_logger()
     app_logger.info("Loading task ID: %s", task_id)
-    if ResultsDB.contains(task_id):
-        app_logger.info("Redirecting to result for task ID: %s", task_id)
-        return make_response(redirect(url_for("result", task_id=task_id)))
-    rsp = make_response(
-        render_template(
-            "optimizer.html",
-            submitted=True,
-            in_progress=True,
-            portfolio_output="",
-            num_contracts=request.cookies.get("num_contracts", NUM_CONTRACTS),
-            corr=request.cookies.get("correlation_cutoff", CORR),
-            num_years=request.cookies.get("num_years", NUM_YEARS),
-        ),
-    )
-    return rsp
-
-
-@app.route("/result/<task_id>")
-def result(task_id) -> Response:
-    app_logger = yf.utils.get_yf_logger()
-    app_logger.info("Result task ID: %s", task_id)
-    if ResultsDB.contains(task_id):
-        optimizer = ResultsDB.get(task_id)
-        assert optimizer is not None
-        portfolio_output = optimizer.portfolio.to_html()
+    task_state = TaskDB.get_state(task_id)
+    cookie_dict = {
+        "num_contracts": request.cookies.get("num_contracts", NUM_CONTRACTS),
+        "correlation_cutoff": request.cookies.get("correlation_cutoff", CORR),
+        "num_years": request.cookies.get("num_years", NUM_YEARS),
+        "submitted": True,
+    }
+    if task_state == TaskState.NOT_FOUND:
+        error_output = format_error("Task not found")
         rsp = make_response(
             render_template(
                 "optimizer.html",
-                submitted=True,
                 in_progress=False,
-                portfolio_output=portfolio_output,
-                num_contracts=request.cookies.get("num_contracts", NUM_CONTRACTS),
-                corr=request.cookies.get("correlation_cutoff", CORR),
-                num_years=request.cookies.get("num_years", NUM_YEARS),
+                error_output=error_output,
+                **cookie_dict,
             ),
         )
-        return rsp
+    elif task_state == TaskState.FAILURE:
+        error_output = TaskDB.get("error", task_id)
+        rsp = make_response(
+            render_template(
+                "optimizer.html",
+                in_progress=False,
+                error_output=error_output,
+                **cookie_dict,
+            ),
+        )
+    elif task_state == TaskState.SUCCESS:
+        portfolio_output = TaskDB.get("result", task_id)
+        rsp = make_response(
+            render_template(
+                "optimizer.html",
+                in_progress=False,
+                portfolio_output=portfolio_output,
+                **cookie_dict,
+            ),
+        )
     else:
-        return make_response(redirect(url_for("loading", task_id=task_id)))
+        rsp = make_response(
+            render_template(
+                "optimizer.html",
+                in_progress=True,
+                **cookie_dict,
+            ),
+        )
+    return rsp
 
 
 @app.route("/plot", methods=["GET"])

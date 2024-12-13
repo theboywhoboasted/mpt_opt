@@ -20,12 +20,22 @@ def get_yf_return_series(
     max_return: int = 50,
     impute_prices: bool = True,
     return_column: str = "Adj Close",
+    num_retries: int = 3,
 ) -> pd.Series:
-    price_df = yf.download(tickr, start=start_date, end=end_date)
-    assert price_df is not None, "Failed to download price data"
-    if impute_prices:
-        price_df = price_df.ffill()
-    return_series = price_df[(return_column, tickr)].apply(np.log).diff() * 100
-    if return_series.abs().max() > max_return:
-        raise YFError(f"Tikcer {tickr} has returns > {max_return}")
-    return return_series
+    for _ in range(num_retries):
+        price_df = yf.download(tickr, start=start_date, end=end_date)
+        if (
+            (price_df is not None)
+            and isinstance(price_df, pd.DataFrame)
+            and not (price_df.empty)
+            and (return_column, tickr) in price_df.columns
+        ):
+            if impute_prices:
+                price_df = price_df.ffill()
+            return_series = price_df[(return_column, tickr)].apply(np.log).diff() * 100
+            if return_series.abs().max() > max_return:
+                raise YFError(f"Tikcer {tickr} has returns > {max_return}")
+            return return_series
+    raise YFError(
+        f"Failed to get return series for {tickr} even after {num_retries} retries"
+    )

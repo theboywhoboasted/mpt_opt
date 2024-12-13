@@ -16,8 +16,8 @@ format:
 	black src/
 
 lint:
-	black --check src/
-	ruff check src/
+	black --check src/ # check if the code is formatted
+	ruff check src/ # fast python static checker
 	docker run --rm -i hadolint/hadolint < Dockerfile.dev
 	docker run --rm -i hadolint/hadolint < Dockerfile.prod
 	PYTHONPATH=src pylint src/ --disable=R,C
