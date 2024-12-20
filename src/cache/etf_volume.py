@@ -24,7 +24,14 @@ class ETFVolumeCache(Cache):
                 assert set(volume_df.columns) == set(ETF_VOLUME_CACHE_HEADER)
                 assert volume_df["symbol"].duplicated().sum() == 0
                 volume_df["entry_time"] = pd.to_datetime(volume_df["entry_time"])
-                volume_df = volume_df[volume_df["entry_time"] > cutoff_time]
+                regular_cutoff = volume_df.notnull().all(axis=1) & (
+                    volume_df["entry_time"] > cutoff_time
+                )
+                empty_cutoff_time = pd.Timestamp.now("UTC") - pd.Timedelta(hours=6)
+                empty_cutoff = volume_df.isnull().any(axis=1) & (
+                    volume_df["entry_time"] > empty_cutoff_time
+                )
+                volume_df = volume_df[regular_cutoff | empty_cutoff]
                 volume_df.to_csv(ETF_VOLUME_CACHE_CSV, index=False)
                 logger.info(
                     f"Pruned volume cache to {ETF_VOLUME_CACHE_CSV}: {volume_df.shape}"
@@ -77,12 +84,22 @@ class ETFVolumeCache(Cache):
                     )
                 except Exception as e:  # pylint: disable=broad-except
                     logger.error("Error for %s: %s", etf, e)
+                    volume_list.append(
+                        {
+                            "symbol": etf,
+                            "exchange": None,
+                            "volume": None,
+                            "price": None,
+                            "currency": None,
+                            "entry_time": pd.Timestamp.now("UTC"),
+                        }
+                    )
             if len(volume_list) > max_new_entries:
                 break
         if len(volume_list) > 0:
             additional_volume_df = pd.DataFrame(volume_list)
             assert set(additional_volume_df.columns) == set(ETF_VOLUME_CACHE_HEADER)
-            if volume_df is None:
+            if (volume_df is None) or (volume_df.empty):
                 volume_df = additional_volume_df
             else:
                 volume_df = pd.concat([volume_df, additional_volume_df])
