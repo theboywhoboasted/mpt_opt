@@ -5,7 +5,7 @@ import pandas as pd
 from pyetfdb_scraper.etf import load_etfs
 
 import web.optimizer
-from backend.yf_utils import YFError, get_yf_return_series
+from backend.yf_utils import get_yf_return_series
 from cache.etf_volume import ETFVolumeCache
 from opt import calc_eff_front, find_min_var_portfolio
 from portfolio import Portfolio
@@ -52,20 +52,17 @@ class ETFOptimizer:
         assert self.contract_list is not None
         logger.info(f"Using {len(self.contract_list)} ETFs in {self.currency}")
 
-    def set_top_etf_return_df(self, logger):
+    def set_top_etf_return_df(self, logger) -> List[str]:
         returns_df = None
+        msg_list = []
         assert self.contract_list is not None
         for etf in self.contract_list:
-            try:
-                return_series = get_yf_return_series(
-                    etf,
-                    self.start_date,
-                    self.end_date,
-                    max_return=50,
-                )
-            except YFError as e:
-                logger.info(f"Error getting return series for {etf}: {e}")
-                continue
+            return_series = get_yf_return_series(
+                etf,
+                self.start_date,
+                self.end_date,
+                max_return=50,
+            )
             if returns_df is None:
                 returns_df = pd.DataFrame(index=return_series.index)
             else:
@@ -75,7 +72,7 @@ class ETFOptimizer:
                 if len(combined_index) > len(old_index):
                     returns_df = returns_df.reindex(combined_index)
             if return_series.notnull().sum() < 0.8 * len(return_series):
-                logger.info(f"{etf} has too many missing values")
+                msg_list.append(f"{etf} has too many missing values")
                 continue
             returns_df[etf] = return_series
             for col in returns_df:
@@ -88,9 +85,9 @@ class ETFOptimizer:
                             avg_return.index[0],
                             avg_return.index[1],
                         )
-                        logger.info(
+                        msg_list.append(
                             f"Removing {lower_return_col} in favour of "
-                            f"{higher_return_col} from returns_df due to lower return",
+                            f"{higher_return_col} from returns_df due to high corr",
                         )
                         returns_df = returns_df.drop(columns=[lower_return_col])
                         break
@@ -99,6 +96,7 @@ class ETFOptimizer:
         assert returns_df is not None
         returns_df = returns_df.dropna(axis=0, how="all")
         self.returns_df = returns_df
+        return msg_list
 
     def run_optimizer(self, task_id: str, logger):
         def write_to_log(msg: str):
@@ -114,7 +112,9 @@ class ETFOptimizer:
         etf_list = load_etfs()
         self.etf_volume_cache = ETFVolumeCache(etf_list)
         self.set_contract_list(logger)
-        self.set_top_etf_return_df(logger)
+        msg_list = self.set_top_etf_return_df(logger)
+        for msg in msg_list:
+            write_to_log(msg)
         write_to_log("ETF data from Yahoo Finance loaded")
         assert self.returns_df is not None
         logger.info(

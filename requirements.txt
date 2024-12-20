@@ -1,9 +1,6 @@
 pyetfdb_scraper==0.4
 Flask==3.0.3
-black==24.4.0
 pandas==2.2.2
-pylint==2.7.2
-ruff==0.8.1
 yfinance==0.2.50
 pathlib==1.0.1
 scipy==1.14.1
@@ -12,8 +9,3 @@ typing==3.7.4.3
 matplotlib==3.9.3
 waitress==3.0.2
 filelock==3.16.1
-pyright==1.1.390
-mypy==1.13.0
-pandas-stubs==2.2.3.241126
-types-waitress==3.0.1.20241117
-scipy-stubs==1.14.1.5

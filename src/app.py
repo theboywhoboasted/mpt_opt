@@ -28,7 +28,7 @@ from web.plot import plot_portfolio
 app = Flask(__name__)
 
 
-def are_cookies_allowed():
+def are_cookies_allowed() -> bool:
     cookies_allowed = request.cookies.get("cookies_allowed", "F")
     return cookies_allowed == "T"
 
