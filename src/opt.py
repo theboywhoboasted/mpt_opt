@@ -8,6 +8,7 @@ src: https://github.com/MarekOzana/streamlit_markowitz/blob/main/src/optimizatio
 
 """
 
+import traceback
 import typing
 
 import numpy as np
@@ -76,7 +77,9 @@ def find_min_var_portfolio(
     return w, r_opt, vol_opt
 
 
-def calc_eff_front(exp_rets: np.ndarray, cov: np.ndarray, logger) -> dict[str, list]:
+def calc_eff_front(
+    exp_rets: np.ndarray, cov: np.ndarray, logger, min_ret: float, max_ret: float
+) -> dict[str, list]:
     """Calculate effective frontier
 
     Iteratively find optimal portfolio for list of minimum returns
@@ -93,11 +96,17 @@ def calc_eff_front(exp_rets: np.ndarray, cov: np.ndarray, logger) -> dict[str, l
     """
     N_STEPS: int = 25
     frnt: dict[str, list] = {"rets": list(), "vols": list(), "sharpe": list()}
-    for r_min in np.linspace(max(exp_rets.min(), 0), exp_rets.max(), N_STEPS):
-        _, ret, vol = find_min_var_portfolio(exp_rets=exp_rets, cov=cov, r_min=r_min)
-        if ret >= r_min:
-            logger.info(f"r_min: {r_min:.3f}%, ret: {ret:.3f}%, vol: {vol:.2f}%")
-            frnt["vols"].append(vol)
-            frnt["rets"].append(ret)
-            frnt["sharpe"].append(ret / vol)
+    for r_min in np.linspace(min_ret, max_ret, N_STEPS):
+        try:
+            _, ret, vol = find_min_var_portfolio(
+                exp_rets=exp_rets, cov=cov, r_min=r_min
+            )
+            if ret >= r_min:
+                logger.info(f"r_min: {r_min:.3f}%, ret: {ret:.3f}%, vol: {vol:.2f}%")
+                frnt["vols"].append(vol)
+                frnt["rets"].append(ret)
+                frnt["sharpe"].append(ret / vol)
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error(f"Error in optimization for r_min: {r_min:.3f}%: {e}")
+            logger.error(traceback.format_exc())
     return frnt

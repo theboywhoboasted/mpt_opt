@@ -1,3 +1,4 @@
+import traceback
 from enum import Enum
 from threading import Thread
 from typing import Dict, Optional
@@ -71,6 +72,7 @@ def run_etf_optimizer(task_id, optimizer: ETFOptimizer, logger):
             format_error(f"Unexpected error in running task ID {task_id}"),
         )
         logger.error(f"Unexpected error for task ID {task_id}: {e}")
+        logger.error(traceback.format_exc())
 
 
 def format_log(log_output: Optional[str]) -> str:

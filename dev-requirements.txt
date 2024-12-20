@@ -1,7 +1,7 @@
 black==24.4.0
 pylint==2.7.2
 ruff==0.8.1
-pyright==1.1.390
+pyright==1.1.391
 mypy==1.13.0
 pandas-stubs==2.2.3.241126
 types-waitress==3.0.1.20241117

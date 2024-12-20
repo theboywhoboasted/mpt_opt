@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from flask import Response, make_response, render_template
 
-from backend.yf_utils import YFError, get_yf_return_series
+from backend.yf_utils import YFError, YFReturnsCache
 from portfolio import Portfolio
 
 MIN_INV_PCT = 10
@@ -33,12 +33,17 @@ class PlotPortfolio:
 
     def populate_price_returns(self):
         return_series = {}
+        return_cache = YFReturnsCache(
+            self.start_date,
+            self.end_date,
+            self.portfolio.weight_map.keys(),
+            impute_prices=True,
+            return_column="Adj Close",
+        )
         for tickr in self.portfolio.weight_map.keys():
             try:
-                return_series[tickr] = get_yf_return_series(
-                    tickr,
-                    self.start_date,
-                    self.end_date,
+                return_series[tickr] = return_cache.get_return_series(
+                    tickr, max_return=100
                 )
                 self.logger.info(f"Retrieved return series for {tickr}")
             except YFError:

@@ -28,9 +28,9 @@ class ETFVolumeCache(Cache):
                     volume_df["entry_time"] > cutoff_time
                 )
                 empty_cutoff_time = pd.Timestamp.now("UTC") - pd.Timedelta(hours=6)
-                empty_cutoff = volume_df.isnull().any(axis=1) & (
-                    volume_df["entry_time"] > empty_cutoff_time
-                )
+                empty_cutoff = volume_df.isna().any(  # pylint: disable=no-member
+                    axis=1
+                ) & (volume_df["entry_time"] > empty_cutoff_time)
                 volume_df = volume_df[regular_cutoff | empty_cutoff]
                 volume_df.to_csv(ETF_VOLUME_CACHE_CSV, index=False)
                 logger.info(
@@ -99,7 +99,7 @@ class ETFVolumeCache(Cache):
         if len(volume_list) > 0:
             additional_volume_df = pd.DataFrame(volume_list)
             assert set(additional_volume_df.columns) == set(ETF_VOLUME_CACHE_HEADER)
-            if (volume_df is None) or (volume_df.empty):
+            if (volume_df is None) or (volume_df.empty):  # pylint: disable=no-member
                 volume_df = additional_volume_df
             else:
                 volume_df = pd.concat([volume_df, additional_volume_df])

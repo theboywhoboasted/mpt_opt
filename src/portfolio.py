@@ -1,3 +1,4 @@
+import dataclasses
 import html
 from typing import Dict, Optional, Tuple
 
@@ -7,13 +8,20 @@ import pandas as pd
 EPS = 1e-6
 
 
+@dataclasses.dataclass
+class Asset(object):
+    symbol: str
+    exp_ret: float
+    std_dev: float
+
+
 class Portfolio(object):
     def __init__(
         self,
         weight_map: Dict,
         exp_ret: Optional[np.ndarray] = None,
         cov: Optional[np.ndarray] = None,
-        risk_free_rate: Optional[float] = None,
+        risk_free_asset: Optional[Asset] = None,
         num_days_per_year: float = 250.0,
         min_weight: float = 0.001,
     ):
@@ -21,18 +29,22 @@ class Portfolio(object):
         self.weight_map = weight_map
         self.exp_ret = exp_ret
         self.cov = cov
-        self.risk_free_rate = risk_free_rate
+        self.risk_free_asset = risk_free_asset
         self.num_days_per_year = num_days_per_year
         self.min_weight = min_weight
 
     @classmethod
     def from_string(cls, s: str) -> Tuple["Portfolio", str]:
-        weight_map = {}
+        weight_map: Dict[str, float] = {}
         err = ""
         for line in s.strip().split("|"):
             if line:
                 etf, weight = line.split(":")
-                weight_map[etf] = float(weight)
+                if etf in weight_map:
+                    err = f"Duplicate ETF weights for: {etf}. Using the sum."
+                    weight_map[etf] += float(weight)
+                else:
+                    weight_map[etf] = float(weight)
         sum_weights = sum(weight_map.values())
         if abs(sum_weights - 1.0) > EPS:
             factor = 1.0 / sum_weights
@@ -79,12 +91,14 @@ class Portfolio(object):
         html_text += (
             f"<tr><td>Volatility</td><td>{portfolio_volatility:.2f}%</td></tr>\n"
         )
-        if self.risk_free_rate is not None:
+        if self.risk_free_asset is not None:
             sharpe_ratio = (
-                portfolio_return - self.risk_free_rate
+                portfolio_return - self.risk_free_asset.exp_ret
             ) / portfolio_volatility
+            html_text += "<tr><td>Risk-free Asset</td>"
+            html_text += f"<td>{self.risk_free_asset.symbol}%</td></tr>\n"
             html_text += "<tr><td>Risk-free Rate</td>"
-            html_text += f"<td>{self.risk_free_rate:.2f}%</td></tr>\n"
+            html_text += f"<td>{self.risk_free_asset.exp_ret:.2f}%</td></tr>\n"
             html_text += "<tr><td>Sharpe Ratio</td>"
             html_text += f"<td>{sharpe_ratio:.2f}</td></tr>\n"
         html_text += "</table>\n"

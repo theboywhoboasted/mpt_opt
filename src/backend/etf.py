@@ -5,10 +5,10 @@ import pandas as pd
 from pyetfdb_scraper.etf import load_etfs
 
 import web.optimizer
-from backend.yf_utils import get_yf_return_series
+from backend.yf_utils import YFDataQualityError, YFReturnsCache
 from cache.etf_volume import ETFVolumeCache
 from opt import calc_eff_front, find_min_var_portfolio
-from portfolio import Portfolio
+from portfolio import Asset, Portfolio
 
 
 class ETFOptimizer:
@@ -56,13 +56,17 @@ class ETFOptimizer:
         returns_df = None
         msg_list = []
         assert self.contract_list is not None
+        returns_cache = YFReturnsCache(
+            self.start_date,
+            self.end_date,
+            self.contract_list,
+        )
         for etf in self.contract_list:
-            return_series = get_yf_return_series(
-                etf,
-                self.start_date,
-                self.end_date,
-                max_return=50,
-            )
+            try:
+                return_series = returns_cache.get_return_series(etf)
+            except YFDataQualityError as e:
+                msg_list.append(f"Ignoring dta for {etf}: {e}")
+                continue
             if returns_df is None:
                 returns_df = pd.DataFrame(index=return_series.index)
             else:
@@ -127,19 +131,25 @@ class ETFOptimizer:
         individual_volatility = np.sqrt(np.diag(covar_matrix))
         num_days_per_year = len(self.returns_df) / self.num_years
 
-        efficient_frontier = calc_eff_front(mean_returns, covar_matrix, logger)
-        write_to_log("Calculated efficient frontier")
         zero_vol = sorted(
             zip(individual_volatility, mean_returns, self.returns_df.columns),
             key=lambda x: x[0],
         )[0]
         risk_free_rate = zero_vol[1]
+        risk_free_contract = zero_vol[2]
         annualized_risk_free_rate = zero_vol[1] * num_days_per_year
         annualized_min_volatility = zero_vol[0] * np.sqrt(num_days_per_year)
         logger.info(
             f"Using {annualized_risk_free_rate:.2f}% as the annualized risk-free "
             f"rate (sigma: {annualized_min_volatility:.2f}%, sym: {zero_vol[2]})",
         )
+
+        min_ret = risk_free_rate
+        max_ret = mean_returns.max()
+        efficient_frontier = calc_eff_front(
+            mean_returns, covar_matrix, logger, min_ret, max_ret
+        )
+        write_to_log("Calculated efficient frontier")
         best_output = sorted(
             zip(efficient_frontier["rets"], efficient_frontier["vols"]),
             key=lambda x: (x[0] - risk_free_rate) / x[1],
@@ -157,7 +167,11 @@ class ETFOptimizer:
             weight_map=dict(weight_map),
             exp_ret=mean_returns,
             cov=covar_matrix,
-            risk_free_rate=annualized_risk_free_rate,
+            risk_free_asset=Asset(
+                risk_free_contract,
+                annualized_risk_free_rate,
+                annualized_min_volatility,
+            ),
             num_days_per_year=num_days_per_year,
         )
         logger.info(f"Mean returns: {mean_returns}")
