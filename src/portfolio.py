@@ -96,7 +96,7 @@ class Portfolio(object):
                 portfolio_return - self.risk_free_asset.exp_ret
             ) / portfolio_volatility
             html_text += "<tr><td>Risk-free Asset</td>"
-            html_text += f"<td>{self.risk_free_asset.symbol}%</td></tr>\n"
+            html_text += f"<td>{self.risk_free_asset.symbol}</td></tr>\n"
             html_text += "<tr><td>Risk-free Rate</td>"
             html_text += f"<td>{self.risk_free_asset.exp_ret:.2f}%</td></tr>\n"
             html_text += "<tr><td>Sharpe Ratio</td>"

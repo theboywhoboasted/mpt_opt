@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -76,6 +77,8 @@ class YFReturnsCache(object):
                 self.fetch_price_data()
                 if tickr in self.data:
                     break
+                else:
+                    time.sleep(30)
         return_series = self.data[tickr]
         if return_series.abs().max() > max_return:
             raise YFDataQualityError(
