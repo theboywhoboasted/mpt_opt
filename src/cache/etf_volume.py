@@ -21,7 +21,10 @@ class ETFVolumeCache(Cache):
             lock = FileLock(str(ETF_VOLUME_CACHE_CSV) + ".lock")
             with lock.acquire(timeout=20):
                 volume_df = pd.read_csv(ETF_VOLUME_CACHE_CSV)
-                assert set(volume_df.columns) == set(ETF_VOLUME_CACHE_HEADER)
+                assert set(volume_df.columns) == set(ETF_VOLUME_CACHE_HEADER), (
+                    volume_df.columns,
+                    ETF_VOLUME_CACHE_HEADER,
+                )
                 assert volume_df["symbol"].duplicated().sum() == 0
                 volume_df["entry_time"] = pd.to_datetime(volume_df["entry_time"])
                 regular_cutoff = volume_df.notnull().all(axis=1) & (
@@ -98,7 +101,10 @@ class ETFVolumeCache(Cache):
                 break
         if len(volume_list) > 0:
             additional_volume_df = pd.DataFrame(volume_list)
-            assert set(additional_volume_df.columns) == set(ETF_VOLUME_CACHE_HEADER)
+            assert set(additional_volume_df.columns) == set(ETF_VOLUME_CACHE_HEADER), (
+                additional_volume_df.columns,
+                ETF_VOLUME_CACHE_HEADER,
+            )
             if (volume_df is None) or (volume_df.empty):  # pylint: disable=no-member
                 volume_df = additional_volume_df
             else:
