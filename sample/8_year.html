@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<!-- saved from url=(0078)https://webappmpt-876216435818.us-central1.run.app/task/20250125_195956_552486 -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* ----------------------------------------------------------------------------------------------- */
+/* General styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+h1 {
+    text-align: center;
+    margin-top: 20px;
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+/* Output styles */
+.output {
+    padding: 5%;
+    margin: 5%;
+    background-color: #e9ecef;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+/* Form styles */
+.form-container {
+    width: 90%;
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    text-align: center;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 16px;
+    height: 3rem;
+    display: flex;
+    background: white;
+    border: 1px solid navajowhite;
+    padding: .5rem;
+    box-sizing: border-box;
+}
+
+button {
+    padding: 10px;
+    margin: 20px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:disabled {
+    background-color: grey;
+    cursor: not-allowed;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+.form-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.form-row label {
+    width: 250px; /* Adjust the width as per your preference */
+    text-align: right;
+    padding-right: 10px;
+}
+
+.form-row input, select {
+    width: 450px; /* Adjust the width as per your preference */
+}
+
+
+/* ----------------------------------------------------------------------------------------------- */
+/* Plot styles */
+.plot {
+    margin-top: 20px;
+    margin-left: 5%;
+    margin-right: 5%;
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.plot img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+/* Loader styles */
+.loader {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+
+/* ----------------------------------------------------------------------------------------------- */
+/* Code box styles */
+.code-box {
+    font-family: monospace; /* Ensures code-like font */
+    white-space: pre-wrap; /* Preserves formatting and wraps text */
+    word-wrap: break-word; /* Ensures long words break to fit */
+    margin: 10px; /* Adds space around the box */
+    border: 1px solid #ccc; /* Clear border */
+    padding: 10px; /* Adds space inside the box */
+    background-color: #f9f9f9; /* Light background for better readability */
+    border-radius: 5px; /* Optional: Rounded corners */
+    max-height: 6em; /* Limits the height to ~4 lines */
+    overflow-y: auto; /* Enables scrolling if content exceeds height */
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+/* Table styles */
+.table-metrics {
+    width: auto;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.table-metrics th,
+.table-metrics td {
+    border: 1px solid #ddd;
+    padding: 10px 25px 10px 25px;
+    text-align: left;
+}
+
+.table-metrics th {
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+}
+
+.table-metrics tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.table-metrics tr:hover {
+    background-color: #ddd;
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+/* Tooltip container */
+.tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+  }
+  
+/* Tooltip text */
+.tooltip .tooltiptext {
+    visibility: hidden;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+    position: absolute;
+    z-index: 1;
+    width: 240px;
+    top: 100%;
+    left: 50%;
+    margin-left: -120px; /* Use half of the width (120/2 = 60), to center the tooltip */
+    font-size: small;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+    </style>
+<title>Portfolio Optimizer</title>
+</head>
+<body>
+    <h1>Mean-Variance Portfolio Optimizer</h1>
+    <div class="form-container">
+        <form action="https://webappmpt-876216435818.us-central1.run.app/task/optimizer.html" method="post">
+
+            
+            
+            
+
+            <div class="form-row">
+                <label for="universe">Choose the universe of Tradable Contracts:</label>
+                <select id="universe" name="universe" required="" disabled="">
+                    <option value="etf_vol">All US ETFs sorted by daily traded volume</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label for="currency">Filter Contracts that trade in this currency:</label>
+                <select id="currency" name="currency" required="" disabled="">
+                    <option value="USD">USD</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <label for="num_contracts">Number of Contracts to Choose From:</label>
+                <input type="number" id="num_contracts" name="num_contracts" value="100" disabled="">
+            </div>
+
+            <div class="form-row">
+                <label for="correlation_cutoff">Drop Contracts with Correlation Greater Than:</label>
+                <input type="number" id="correlation_cutoff" name="correlation_cutoff" value="0.99" min="0.0" step="0.001" disabled="">
+            </div>
+
+            <div class="form-row">
+                <label for="num_years">Number of Years to Train On:</label>
+                <input type="number" id="num_years" name="num_years" value="8" step="0.01" disabled="">
+            </div>
+            
+            <button type="submit" onclick="submitForm()" disabled="">Generate Optimised Portfolio</button>
+        </form>
+        <p>You can read more about the fields and algorithm used on
+            <a href="https://github.com/theboywhoboasted/mpt_opt">github</a></p>
+    </div>
+
+    
+
+    <div class="code-box">Progress Logs:<br>2025-01-25 19:59:56: Starting optimizer<br>2025-01-25 20:00:07: Updated ETF metadata cache<br>2025-01-25 20:00:27: Removing SPY in favour of IVV from returns_df due to high corr<br>2025-01-25 20:00:27: Removing QQQ in favour of TQQQ from returns_df due to high corr<br>2025-01-25 20:00:27: Removing IVV in favour of VOO from returns_df due to high corr<br>2025-01-25 20:00:27: SMH has too many missing values<br>2025-01-25 20:00:27: Removing VTI in favour of VOO from returns_df due to high corr<br>2025-01-25 20:00:27: Removing EFA in favour of IEFA from returns_df due to high corr<br>2025-01-25 20:00:27: Removing SOXX in favour of SOXL from returns_df due to high corr<br>2025-01-25 20:00:27: Removing TNA in favour of IWM from returns_df due to high corr<br>2025-01-25 20:00:27: SGOV has too many missing values<br>2025-01-25 20:00:27: Removing VOO in favour of SPXL from returns_df due to high corr<br>2025-01-25 20:00:27: Removing IEFA in favour of VEA from returns_df due to high corr<br>2025-01-25 20:00:27: Removing MDY in favour of IJH from returns_df due to high corr<br>2025-01-25 20:00:27: Removing VUG in favour of IWF from returns_df due to high corr<br>2025-01-25 20:00:27: Removing SPLG in favour of SPXL from returns_df due to high corr<br>2025-01-25 20:00:27: Removing EEM in favour of IEMG from returns_df due to high corr<br>2025-01-25 20:00:27: Removing TMF in favour of TLT from returns_df due to high corr<br>2025-01-25 20:00:27: QQQM has too many missing values<br>2025-01-25 20:00:27: Removing UPRO in favour of SPXL from returns_df due to high corr<br>2025-01-25 20:00:27: Removing IEMG in favour of VWO from returns_df due to high corr<br>2025-01-25 20:00:27: Removing IWD in favour of VTV from returns_df due to high corr<br>2025-01-25 20:00:27: Removing VNQ in favour of IYR from returns_df due to high corr<br>2025-01-25 20:00:27: Removing IWB in favour of SPXL from returns_df due to high corr<br>2025-01-25 20:00:27: Removing XLK in favour of VGT from returns_df due to high corr<br>2025-01-25 20:00:27: Removing QLD in favour of TQQQ from returns_df due to high corr<br>2025-01-25 20:00:27: Removing JNK in favour of HYG from returns_df due to high corr<br>2025-01-25 20:00:27: Removing GLD in favour of IAU from returns_df due to high corr<br>2025-01-25 20:00:27: Ignoring dta for UVXY: YFDataQualityError: UVXY has at least one daily return &gt; 50 in magnitude<br>2025-01-25 20:00:27: Removing SPXS in favour of SDS from returns_df due to high corr<br>2025-01-25 20:00:27: Removing VT in favour of ACWI from returns_df due to high corr<br>2025-01-25 20:00:27: Removing SPYG in favour of IWF from returns_df due to high corr<br>2025-01-25 20:00:27: Removing YINN in favour of FXI from returns_df due to high corr<br>2025-01-25 20:00:27: JEPI has too many missing values<br>2025-01-25 20:00:27: Removing SPXU in favour of SDS from returns_df due to high corr<br>2025-01-25 20:00:27: Removing SSO in favour of SPXL from returns_df due to high corr<br>2025-01-25 20:00:27: Removing SDS in favour of SH from returns_df due to high corr<br>2025-01-25 20:00:27: Removing TLT in favour of VGLT from returns_df due to high corr<br>2025-01-25 20:00:27: Removing IVW in favour of IWF from returns_df due to high corr<br>2025-01-25 20:00:27: Removing IWF in favour of SCHG from returns_df due to high corr<br>2025-01-25 20:00:27: Removing VEA in favour of SCHF from returns_df due to high corr<br>2025-01-25 20:00:27: Removing SCHX in favour of SPXL from returns_df due to high corr<br>2025-01-25 20:00:27: Removing ITOT in favour of SPXL from returns_df due to high corr<br>2025-01-25 20:00:27: Removing VXUS in favour of VEU from returns_df due to high corr<br>2025-01-25 20:00:27: Removing IWR in favour of VO from returns_df due to high corr<br>2025-01-25 20:00:27: Removing VYM in favour of VTV from returns_df due to high corr<br>2025-01-25 20:00:27: Removing SQQQ in favour of QID from returns_df due to high corr<br>2025-01-25 20:00:27: Removing IAU in favour of GLDM from returns_df due to high corr<br>2025-01-25 20:00:27: ETF data from Yahoo Finance loaded<br>2025-01-25 20:00:29: Calculated efficient frontier<br>2025-01-25 20:00:29: Finished optimization</div>
+
+    
+    <div class="output">
+<h2>Portfolio Components</h2>
+<p>Components are sorted in order of traded volume</p>
+<table class="table-metrics"><tbody><tr><th>Component</th><th>Weight</th>
+<th>Return</th><th>Volatility</th><th>Contribution to Return</th><th>Contribution to Variance</th></tr>
+<tr><td>BIL</td><td>3.23%</td>
+<td>2.03%</td>
+<td>0.26%</td>
+<td>0.07%</td><td>0.00%</td></tr>
+<tr><td>SHV</td><td>5.41%</td>
+<td>2.06%</td>
+<td>0.28%</td>
+<td>0.11%</td><td>0.00%</td></tr>
+<tr><td>JPST</td><td>55.99%</td>
+<td>2.68%</td>
+<td>0.98%</td>
+<td>1.50%</td><td>0.45%</td></tr>
+<tr><td>VGT</td><td>2.89%</td>
+<td>21.03%</td>
+<td>24.88%</td>
+<td>0.61%</td><td>0.65%</td></tr>
+<tr><td>USFR</td><td>28.30%</td>
+<td>2.24%</td>
+<td>0.82%</td>
+<td>0.63%</td><td>0.05%</td></tr>
+<tr><td>GLDM</td><td>4.18%</td>
+<td>11.84%</td>
+<td>14.52%</td>
+<td>0.49%</td><td>0.49%</td></tr>
+<tr><th>Portfolio</th><th>100.00%</th><th></th><th></th><th>3.42%</th><th>1.64%</th></tr>
+</tbody></table><h2>Correlation of Portfolio Components</h2>
+<table class="table-metrics"><tbody><tr><th></th>
+<th>BIL</th>
+<th>SHV</th>
+<th>JPST</th>
+<th>VGT</th>
+<th>USFR</th>
+<th>GLDM</th>
+</tr><tr><th>BIL</th>
+<td>1.00</td>
+<td>0.47</td>
+<td>0.08</td>
+<td>0.01</td>
+<td>0.12</td>
+<td>0.03</td>
+</tr>
+<tr><th>SHV</th>
+<td>0.47</td>
+<td>1.00</td>
+<td>0.06</td>
+<td>-0.04</td>
+<td>0.10</td>
+<td>0.19</td>
+</tr>
+<tr><th>JPST</th>
+<td>0.08</td>
+<td>0.06</td>
+<td>1.00</td>
+<td>0.21</td>
+<td>-0.03</td>
+<td>0.21</td>
+</tr>
+<tr><th>VGT</th>
+<td>0.01</td>
+<td>-0.04</td>
+<td>0.21</td>
+<td>1.00</td>
+<td>0.02</td>
+<td>0.11</td>
+</tr>
+<tr><th>USFR</th>
+<td>0.12</td>
+<td>0.10</td>
+<td>-0.03</td>
+<td>0.02</td>
+<td>1.00</td>
+<td>-0.00</td>
+</tr>
+<tr><th>GLDM</th>
+<td>0.03</td>
+<td>0.19</td>
+<td>0.21</td>
+<td>0.11</td>
+<td>-0.00</td>
+<td>1.00</td>
+</tr>
+</tbody></table>
+<h2>Portfolio Metrics</h2>
+<table class="table-metrics"><tbody><tr><td>Return</td><td>3.42%</td></tr>
+<tr><td>Variance</td><td>1.64%</td></tr>
+<tr><td>Volatility</td><td>1.28%</td></tr>
+<tr><td>Risk-free Asset</td><td>BIL</td></tr>
+<tr><td>Risk-free Rate</td><td>2.03%</td></tr>
+<tr><td>Sharpe Ratio</td><td>1.08</td></tr>
+</tbody></table>
+<div class="form-container"><a href="https://webappmpt-876216435818.us-central1.run.app/plot.html?portfolio=BIL:0.032298660786106104|SHV:0.05414262246991922|JPST:0.5599185465947893|VGT:0.028893014182384744|USFR:0.2829523666414712|GLDM:0.04179478932532681&amp;start_date=2019-08-05&amp;end_date=2025-01-24&amp;sip_amount=500&amp;sip_frequency_days=15" target="_blank" rel="noopener noreferrer"><button>Plot Portfolio</button></a><a href="https://webappmpt-876216435818.us-central1.run.app/" target="_blank" rel="noopener noreferrer"><button>Run Optimizer Again</button></a></div>
+
+
+
+</div></body></html>
